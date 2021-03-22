@@ -2,6 +2,8 @@
 
 Python tool to automate send commands to a serial command line interface from a *cmdscript* text file that specify commands-responses with a simple language.
 
+Note: Work In Progress, the code was not tested neither validated yet.
+
 ## Usage
 
 ```bash
@@ -32,15 +34,13 @@ EOL - Send End Of Line character/s.
 A simple example of a cmdscript will be the following:
 
 ```text
-# This line is a comment
+# This line is a comment and will be ignored
 
 # Use Carriage Return character ('\r') as End Of Line character
 CFGEOL CR
 
 # Timeout at 300ms if no command response received with RES
 CFGRESTIMEOUT 300
-
-#####
 
 # Open Serial Port /dev/ttyUSB0 at 115200 bauds
 CONNECT /dev/ttyUSB0 115200
