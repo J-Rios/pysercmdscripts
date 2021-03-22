@@ -2,7 +2,7 @@
 
 Python tool to automate send commands to a serial command line interface from a *cmdscript* text file that specify commands-responses with a simple language.
 
-Note: Work In Progress, the code was not tested neither validated yet.
+Note: Basic functionality seems ok when using simple cmdscripts, however not all commands for complex task has been tested yet.
 
 ## Usage
 
@@ -44,6 +44,10 @@ CFGRESTIMEOUT 300
 
 # Open Serial Port /dev/ttyUSB0 at 115200 bauds
 CONNECT /dev/ttyUSB0 115200
+
+# Send an End Of Line character/s (enter) and expect to receive "#" as response
+EOL
+RES #
 
 # Send "reboot" command and wait for 10s
 CMD reboot

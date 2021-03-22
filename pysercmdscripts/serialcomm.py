@@ -8,9 +8,9 @@ Description:
 Author:
     Jose Miguel Rios Rubio
 Date:
-    01/01/2021
+    23/03/2021
 Version:
-    1.0.0
+    1.0.1
 '''
 
 ###############################################################################
@@ -104,9 +104,10 @@ def serial_read_until(ser=None, expected=LF, num_bytes=1024, timeout=None):
     if timeout is not None:
         ser.timeout = timeout
     try:
-        raw_read = ser.read_until(expected=expected, size=num_bytes)
+        raw_read = ser.read_until(expected, num_bytes)
     except Exception as e:
         print_log(LOG.ERROR, str(e))
+        return ""
     ser.timeout = backup_timeout
     print_log(LOG.DEBUG, "Serial read (bytes):\n{}".format(raw_read))
     # Parse to string
@@ -115,6 +116,7 @@ def serial_read_until(ser=None, expected=LF, num_bytes=1024, timeout=None):
         str_read = str(raw_read) # str_read = raw_read.decode()
     except Exception as e:
         print_log(LOG.ERROR, str(e))
+        return ""
     print_log(LOG.DEBUG, "Serial read (str):\n{}".format(str_read))
     return str_read
 
@@ -122,7 +124,7 @@ def serial_read_until(ser=None, expected=LF, num_bytes=1024, timeout=None):
 def serial_write(ser=None, to_write=None):
     '''Basic Serial write function managed for Py2 and Py3 support.'''
     if ser is None:
-        return None
+        return False
     print_log(LOG.DEBUG, "Serial write (str):\n{}".format(to_write))
     if is_running_with_py3():
         to_write = to_write.encode()
@@ -130,8 +132,10 @@ def serial_write(ser=None, to_write=None):
         ser.write(to_write)
     except Exception as e:
         print_log(LOG.ERROR, str(e))
+        return False
     print_log(LOG.DEBUG, "Serial write (bytes):\n{}".format(to_write))
     ser.flush()
+    return True
 
 
 def serial_flush(ser=None):

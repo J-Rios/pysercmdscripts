@@ -112,6 +112,12 @@ class TEXT():
     DELAYMS = \
         "DELAYMS Waiting for {}ms..."
 
+    EOL_FAIL = \
+        "EOL Fail to send"
+
+    EOL_SEND = \
+        "EOL Send"
+
     CMD_SEND_FAIL = \
         "CMD Fail to send command: {}"
 
@@ -119,7 +125,7 @@ class TEXT():
         "CMD Send command: {}"
 
     RES_FAIL = \
-        "RES Fail to receive expected response:\n" \
+        "RES Fail to receive expected response.\n" \
         "  Expected: {}\n" \
         "  Received: {}"
 

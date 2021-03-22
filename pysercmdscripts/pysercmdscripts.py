@@ -19,18 +19,18 @@ Version:
 ###############################################################################
 ### Imported modules
 
-from time import sleep
 from sys import argv as sys_argv
 from sys import exit as sys_exit
 from argparse import ArgumentParser as argparse_ArgumentParser
-from threading import Thread
+from time import sleep
 
 from constants import RC, LOG, EOL, CONST
 from texts import TEXT
-from auxiliar import print_log, stdin_input
+from auxiliar import print_log, is_int
 from filesrw import file_read_all_text
 from serialcomm import (
-    serial_open, serial_close, serial_read, serial_read_str, serial_write
+    serial_open, serial_close, serial_read, serial_read_str,
+    serial_read_until, serial_write
 )
 
 ###############################################################################
@@ -83,8 +83,8 @@ def cmd_connect(args):
         return False
     serial_bauds = int(serial_bauds)
     # Try to open the serial port
-    print_log(LOG.INFO, TEXT.CONNECT_OPENING.format(port, bauds))
-    ser = serial_open(port, bauds, res_timeout, 1.0)
+    print_log(LOG.INFO, TEXT.CONNECT_OPENING.format(serial_port, serial_bauds))
+    ser = serial_open(serial_port, serial_bauds, res_timeout, 1.0)
     if (ser is None) or (not ser.isOpen()):
         print_log(LOG.INFO, TEXT.CONNECT_OPEN_FAIL)
         return False
@@ -115,10 +115,10 @@ def cmd_cfrestimeout(args):
         print_log(LOG.ERROR, TEXT.CMD_NO_ARGS.format("CFGRESTIMEOUT"))
         return False
     # Check for valid timeout value
-    if not is_int(command[0]):
+    if not is_int(args[0]):
         print_log(LOG.ERROR, TEXT.CFGRESTIMEOUT_INVALID)
         return False
-    res_timeout = int(command[0])/1000
+    res_timeout = int(args[0])/1000
     if ser is not None:
         ser.timeout = res_timeout
     print_log(LOG.INFO, TEXT.CFGRESTIMEOUT_SET.format(res_timeout))
@@ -179,16 +179,28 @@ def cmd_delayms(args):
     return True
 
 
+def cmd_eol(args):
+    '''Command EOL (send an End Of Line character/s to Serial CLI)'''
+    # Send the EOL
+    rc = serial_write(ser, eol)
+    if rc is None:
+        print_log(LOG.ERROR, TEXT.EOL_FAIL)
+        return False
+    print_log(LOG.INFO, TEXT.EOL_SEND)
+    return True
+
+
 def cmd_command(args):
     '''Command CMD (send a command to Serial CLI)'''
     # Check for expected number of arguments
     if len(args) < 1:
         print_log(LOG.ERROR, TEXT.CMD_NO_ARGS.format("CMD"))
         return False
-    # Compose command string and send it
+    # Compose command string and add EOL character/s
     cmd_str = " ".join(args)
-    rc = serial_write(ser, cmd_str)
-    if rc is None:
+    cmd_str_eol = "{}{}".format(cmd_str, eol)
+    # Send the command
+    if not serial_write(ser, cmd_str_eol):
         print_log(LOG.ERROR, TEXT.CMD_SEND_FAIL.format(cmd_str))
         return False
     print_log(LOG.INFO, TEXT.CMD_SEND.format(cmd_str))
@@ -204,8 +216,8 @@ def cmd_response(args):
     # Compose response string to expect
     res_str = " ".join(args)
     # Receive and read response
-    res = serial_read_str(ser)
-    if res_str not in res:
+    res = serial_read_until(ser, res_str, timeout=res_timeout)
+    if res == "":
         print_log(LOG.ERROR, TEXT.RES_FAIL.format(res_str, res))
         return False
     print_log(LOG.INFO, TEXT.RES_OK.format(res_str))
@@ -264,14 +276,14 @@ def cmdscript_interpreter(cmdscript):
         elif operation == "CFGEOL":
             if not cmd_cfgeol(args):
                 return False
-        elif operation == "EOL":
-            if not cmd_eol(args):
-                return False
         elif operation == "DELAY":
             if not cmd_delay(args):
                 return False
         elif operation == "DELAYMS":
             if not cmd_delayms(args):
+                return False
+        elif operation == "EOL":
+            if not cmd_eol(args):
                 return False
         elif operation == "CMD":
             if not cmd_command(args):
@@ -281,6 +293,7 @@ def cmdscript_interpreter(cmdscript):
                 return False
         else:
             print_log(LOG.WARNING, TEXT.INVALID_CMDSCRIPT_CMD.format(command))
+    return True
 
 ###############################################################################
 ### Main Function
